@@ -41,6 +41,17 @@ export default function App() {
   };
 
   const handleSubscriptionCreate = (subscription: Subscription) => {
+    const subscriptionCount = subscriptions.length + 1;
+    const eventProperties = {
+      subscription_id: subscription.id,
+      subscription_category: subscription.category || 'Other',
+      billing_interval: subscription.billing.toLowerCase(),
+      status: subscription.status || 'active',
+      subscription_count: subscriptionCount,
+    };
+
+    posthogLogger.info('subscription_created', eventProperties);
+    posthog?.capture('subscription_created', eventProperties);
     setSubscriptions((currentSubscriptions) => [subscription, ...currentSubscriptions]);
     setExpandedSubscriptionId(null);
   };

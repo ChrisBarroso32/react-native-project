@@ -1,5 +1,23 @@
-import Constants from 'expo-constants'
-import PostHog from 'posthog-react-native'
+import Constants from 'expo-constants';
+import PostHog from 'posthog-react-native';
+import { Platform } from 'react-native';
+
+const webStorage = {
+  getItem(key: string) {
+    try {
+      return globalThis.localStorage?.getItem(key) ?? null
+    } catch {
+      return null
+    }
+  },
+  setItem(key: string, value: string) {
+    try {
+      globalThis.localStorage?.setItem(key, value)
+    } catch {
+      return
+    }
+  },
+}
 
 const extra = Constants.expoConfig?.extra
 const projectToken = extra?.posthogProjectToken as string | undefined
@@ -21,6 +39,7 @@ export const posthog =
   projectToken && host
     ? new PostHog(projectToken, {
         host,
+      customStorage: Platform.OS === 'web' ? webStorage : undefined,
         captureAppLifecycleEvents: true,
         logs: {
           serviceName: 'recurrly-mobile',

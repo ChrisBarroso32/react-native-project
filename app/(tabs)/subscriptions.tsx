@@ -1,7 +1,8 @@
 import { HOME_SUBSCRIPTIONS } from "@/assets/constants/data";
 import SubscriptionCard from "@/components/SubscriptionCard";
+import { posthog, posthogLogger } from "@/libs/posthog";
 import { styled } from "nativewind";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FlatList, Pressable, Text, TextInput, View } from "react-native";
 import { SafeAreaView as RNSafeAreaView } from "react-native-safe-area-context";
 const SafeAreaView = styled(RNSafeAreaView);
@@ -9,6 +10,20 @@ const SafeAreaView = styled(RNSafeAreaView);
 export default function Subscriptions() {
     const [query, setQuery] = useState("");
     const [expandedSubscriptionId, setExpandedSubscriptionId] = useState<string | null>(null);
+
+    useEffect(() => {
+        const eventProperties = {
+            subscription_count: HOME_SUBSCRIPTIONS.length,
+            active_count: HOME_SUBSCRIPTIONS.filter((subscription) => subscription.status === "active").length,
+            paused_count: HOME_SUBSCRIPTIONS.filter((subscription) => subscription.status === "paused").length,
+            cancelled_count: HOME_SUBSCRIPTIONS.filter((subscription) => subscription.status === "cancelled").length,
+            source: "subscriptions_tab",
+        };
+
+        posthogLogger.info("user_subscriptions_viewed", eventProperties);
+        posthog?.capture("user_subscriptions_viewed", eventProperties);
+    }, []);
+
     const normalizedQuery = query.trim().toLocaleLowerCase();
     const filteredSubscriptions = HOME_SUBSCRIPTIONS.filter((subscription) =>
         [subscription.name, subscription.category, subscription.plan, subscription.paymentMethod, subscription.status]
@@ -24,9 +39,19 @@ export default function Subscriptions() {
                     <SubscriptionCard
                         {...item}
                         expanded={expandedSubscriptionId === item.id}
-                        onPress={() => setExpandedSubscriptionId((currentId) =>
-                            currentId === item.id ? null : item.id,
-                        )}
+                        onPress={() => {
+                            const expanded = expandedSubscriptionId !== item.id;
+                            const eventProperties = {
+                                subscription_id: item.id,
+                                subscription_category: item.category || "Other",
+                                billing_interval: item.billing.toLowerCase(),
+                                action: expanded ? "expanded" : "collapsed",
+                            };
+
+                            posthogLogger.info("subscription_details_toggled", eventProperties);
+                            posthog?.capture("subscription_details_toggled", eventProperties);
+                            setExpandedSubscriptionId(expanded ? item.id : null);
+                        }}
                     />
                 )}
                 ItemSeparatorComponent={() => <View className="h-3" />}
