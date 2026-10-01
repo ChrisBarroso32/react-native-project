@@ -1,4 +1,5 @@
 import images from '@/assets/constants/images';
+import { posthog } from '@/libs/posthog';
 import { useClerk, useUser } from '@clerk/expo';
 import { styled } from "nativewind";
 import { Image, Pressable, Text, View } from 'react-native';
@@ -12,6 +13,8 @@ const Settings = () => {
     const handleSignOut = async () => {
         try {
             await signOut();
+            posthog?.capture('sign_out_completed');
+            posthog?.reset();
         } catch (error) {
             console.error('Sign-out failed:', error);
             // Don't reset analytics if sign-out failed

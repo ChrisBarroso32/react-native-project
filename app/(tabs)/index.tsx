@@ -6,6 +6,7 @@ import SubscriptionCard from "@/components/SubscriptionCard";
 import UpcomingSubscriptionCard from "@/components/UpcomingSubscriptionCard";
 import "@/global.css";
 import { formatCurrency } from "@/libs/utils";
+import { posthog, posthogLogger } from '@/libs/posthog';
 import dayjs from "dayjs";
 import { styled } from "nativewind";
 import { useState } from "react";
@@ -15,6 +16,26 @@ const SafeAreaView = styled(RNSafeAreaView);
 
 export default function App() {
   const [expandedSubscriptionId, setExpandedSubscriptionId] = useState<string | null>(null);
+
+  const handleSubscriptionDetailsToggle = (subscription: typeof HOME_SUBSCRIPTIONS[number]) => {
+    const expanded = expandedSubscriptionId !== subscription.id;
+
+    const action = expanded ? 'expanded' : 'collapsed';
+
+    posthogLogger.info('subscription_details_toggled', {
+      subscription_id: subscription.id,
+      subscription_category: subscription.category!,
+      billing_interval: subscription.billing.toLowerCase(),
+      action,
+    });
+    posthog?.capture('subscription_details_toggled', {
+      subscription_id: subscription.id,
+      subscription_category: subscription.category!,
+      billing_interval: subscription.billing.toLowerCase(),
+      action,
+    });
+    setExpandedSubscriptionId(expanded ? subscription.id : null);
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-background p-5">
@@ -67,8 +88,7 @@ export default function App() {
             expanded={
               expandedSubscriptionId === item.id
             }
-            onPress={() => setExpandedSubscriptionId((currentId) =>
-            (currentId === item.id ? null : item.id))}
+            onPress={() => handleSubscriptionDetailsToggle(item)}
           />
         )}
         extraData={expandedSubscriptionId}
