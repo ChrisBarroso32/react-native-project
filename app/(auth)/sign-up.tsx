@@ -1,5 +1,6 @@
 import { useAuth, useSignUp } from '@clerk/expo';
 import { Link, useRouter, type Href } from 'expo-router';
+import { posthog, posthogLogger } from '@/libs/posthog';
 import { styled } from 'nativewind';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
@@ -71,6 +72,8 @@ const SignUp = () => {
                     }
                 },
             });
+            posthogLogger.info('account_created', { authentication_method: 'email_password' });
+            posthog?.capture('account_created', { method: 'email_password' });
         } else {
             console.error('Sign-up attempt not complete:', signUp);
         }

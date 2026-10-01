@@ -1,5 +1,6 @@
 import { useSignIn } from '@clerk/expo';
 import { Link, useRouter, type Href } from 'expo-router';
+import { posthog, posthogLogger } from '@/libs/posthog';
 import { styled } from 'nativewind';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
@@ -53,6 +54,8 @@ const SignIn = () => {
                     }
                 },
             });
+            posthogLogger.info('sign_in_completed', { authentication_method: 'password' });
+            posthog?.capture('sign_in_completed', { method: 'password' });
         } else if (signIn.status === 'needs_second_factor') {
             // Handle MFA if needed (not implemented in this basic flow)
             console.log('MFA required');
@@ -95,6 +98,8 @@ const SignIn = () => {
                     }
                 },
             });
+            posthogLogger.info('sign_in_completed', { authentication_method: 'email_code' });
+            posthog?.capture('sign_in_completed', { method: 'email_code' });
         } else {
             console.error('Sign-in attempt not complete:', signIn);
         }
@@ -273,7 +278,7 @@ const SignIn = () => {
 
                         {/* Sign-Up Link */}
                         <View className="auth-link-row">
-                            <Text className="auth-link-copy">Don't have an account?</Text>
+                            <Text className="auth-link-copy">Don&apos;t have an account?</Text>
                             <Link href="/(auth)/sign-up" asChild>
                                 <Pressable>
                                     <Text className="auth-link">Create Account</Text>
